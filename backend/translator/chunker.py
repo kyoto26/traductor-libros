@@ -45,10 +45,10 @@ def _build_context(previous_chunk: Chunk | None, context_chars: int) -> str | No
     return combined[-context_chars:]
 
 
-def create_chunks(
-    document: Document,
-    max_tokens: int = _DEFAULT_MAX_TOKENS,
-    context_chars: int = _DEFAULT_CONTEXT_CHARS,
+def _create_chapter_chunks(
+    blocks: list[Block],
+    max_tokens: int,
+    context_chars: int,
 ) -> list[Chunk]:
     chunks: list[Chunk] = []
     current_blocks: list[Block] = []
@@ -66,7 +66,7 @@ def create_chunks(
         current_blocks = []
         current_tokens = 0
 
-    for block in document.all_blocks():
+    for block in blocks:
         block_tokens = _estimate_tokens(block.text)
 
         if block_tokens > max_tokens:
@@ -86,5 +86,27 @@ def create_chunks(
 
     if current_blocks:
         flush()
+
+    return chunks
+
+
+def create_chunks(
+    document: Document,
+    max_tokens: int = _DEFAULT_MAX_TOKENS,
+    context_chars: int = _DEFAULT_CONTEXT_CHARS,
+) -> list[Chunk]:
+    # Chunking runs per chapter, never spanning a chapter boundary — a chunk
+    # mixing blocks from two different chapters (easy to hit with several
+    # short chapters that together still fit under max_tokens) would send
+    # them to the LLM as one translation unit, with no way to know where one
+    # chapter's content ends and the next begins when mapping the result
+    # back. Chapter-per-chapter also means each chapter's first chunk always
+    # starts with context=None, instead of leaking trailing text from a
+    # previous, unrelated chapter as if it were coherence context.
+    chunks: list[Chunk] = []
+
+    for chapter in document.chapters:
+        sorted_blocks = sorted(chapter.blocks, key=lambda b: b.order)
+        chunks.extend(_create_chapter_chunks(sorted_blocks, max_tokens, context_chars))
 
     return chunks
