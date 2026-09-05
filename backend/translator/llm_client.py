@@ -38,6 +38,9 @@ class TranslatorClient(ABC):
     ) -> TranslationResult:
         ...
 
+    def close(self) -> None:
+        """Release any resources held by the client. No-op by default."""
+
 
 # NOTE: prompt_builder.build_translation_request() can already fold glossary
 # instructions into the `context` string it returns. If a caller passes that
@@ -189,6 +192,9 @@ class ClaudeTranslator(TranslatorClient):
             input_tokens=response.usage.input_tokens,
             output_tokens=response.usage.output_tokens,
         )
+
+    def close(self) -> None:
+        self._client.close()
 
 
 def get_translator() -> TranslatorClient:

@@ -10,6 +10,24 @@ _PREVIOUS_CONTEXT_TEMPLATE = (
     'coherencia — NO lo traduzcas ni lo incluyas en tu respuesta: "{context}"'
 )
 
+_STRUCTURE_INSTRUCTION_TEMPLATE = (
+    "El texto a traducir tiene {count} párrafos separados por líneas en "
+    "blanco. Tu traducción debe preservar exactamente esas {count} "
+    "separaciones, en el mismo orden, para poder reconstruir cada párrafo "
+    "por separado."
+)
+
+
+def _format_structure_instruction(chunk: Chunk) -> str | None:
+    # Only relevant when a chunk bundles more than one block: the caller
+    # needs to split the translation back into per-block text by paragraph
+    # breaks, so the model must be told explicitly to preserve them —
+    # otherwise it may merge or reformat paragraphs on its own.
+    if len(chunk.blocks) <= 1:
+        return None
+
+    return _STRUCTURE_INSTRUCTION_TEMPLATE.format(count=len(chunk.blocks))
+
 
 def _format_glossary(glossary: dict[str, str] | None) -> str | None:
     if not glossary:
@@ -32,14 +50,14 @@ def build_translation_request(
     chunk: Chunk,
     glossary: dict[str, str] | None = None,
 ) -> tuple[str, str | None]:
-    # Glossary first (hard rule the model must follow), previous-chunk
-    # context second (soft coherence hint) — kept as separate labeled
-    # sections instead of one blended sentence, so a model that already
-    # struggles with ambiguous instructions doesn't confuse a rule with
-    # a hint.
+    # Hard rules first (output structure, then glossary substitutions),
+    # soft coherence hint last — kept as separate labeled sections instead
+    # of one blended sentence, so a model that already struggles with
+    # ambiguous instructions doesn't confuse a rule with a hint.
     sections = [
         section
         for section in (
+            _format_structure_instruction(chunk),
             _format_glossary(glossary),
             _format_previous_context(chunk.context),
         )
