@@ -1,9 +1,12 @@
+from contextlib import asynccontextmanager
+
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from api.routes import router
 from api.security import FileTooLargeError, InvalidFileTypeError
+from db.database import init_db
 from extractors.epub_extractor import EpubParsingError
 from extractors.pdf_extractor import PdfParsingError
 from extractors.zip_safety import ZipSafetyError
@@ -13,7 +16,14 @@ from translator.llm_client import TranslationError
 
 load_dotenv()
 
-app = FastAPI(title="traductor-docs")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+
+app = FastAPI(title="traductor-docs", lifespan=lifespan)
 
 
 @app.exception_handler(FileTooLargeError)
@@ -28,9 +38,12 @@ async def invalid_file_type_handler(request: Request, exc: InvalidFileTypeError)
 
 @app.exception_handler(TranslationError)
 async def translation_error_handler(request: Request, exc: TranslationError):
-    # Aborts the whole request on first failure — no partial saves, no
-    # retries. Revisit this once large documents (EPUB/PDF) make discarding
-    # all progress on a late failure too costly.
+    # Under the job model (Fase 5) this no longer fires for /translate-*:
+    # translate_document() now only runs inside the background job runner
+    # (routes._run_job), which catches TranslationError itself and marks
+    # the job 'failed' instead of raising into a response. Kept registered
+    # for any direct/synchronous caller of translate_document. Still no
+    # partial saves either way — a failing chunk fails the whole document.
     return JSONResponse(status_code=502, content={"detail": str(exc)})
 
 

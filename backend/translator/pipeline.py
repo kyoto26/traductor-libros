@@ -1,5 +1,6 @@
 import logging
 import re
+from typing import Callable, Optional
 
 from models.document import Document
 from translator.chunker import Chunk, create_chunks
@@ -49,15 +50,35 @@ def _apply_translation(chunk: Chunk, translated_text: str) -> None:
         block.translated_text = ""
 
 
-def translate_document(document: Document, glossary: Glossary | None = None) -> None:
+def translate_document(
+    document: Document,
+    glossary: Glossary | None = None,
+    on_progress: Optional[Callable[[int, int], None]] = None,
+) -> None:
     # Format-agnostic: operates purely on Chapter/Block, so it works the
-    # same whether the Document came from TXT, EPUB, or (later) PDF.
+    # same whether the Document came from TXT, EPUB, or PDF.
     translator = get_translator()
     try:
-        for chunk in create_chunks(document):
+        chunks = create_chunks(document)
+        total_blocks = sum(len(chunk.blocks) for chunk in chunks)
+        translated_blocks = 0
+
+        if on_progress:
+            on_progress(translated_blocks, total_blocks)
+
+        for chunk in chunks:
             relevant_terms = glossary.find_matches(chunk.text) if glossary else None
             text, context = build_translation_request(chunk, glossary=relevant_terms)
             result = translator.translate(text=text, context=context)
             _apply_translation(chunk, result.text)
+
+            # Progress resolution is per chunk, not per individual block: a
+            # single translate() call is one blocking request that returns
+            # everything in that chunk at once, so there's no finer-grained
+            # signal available without changing how the LLM is called
+            # (e.g. streaming).
+            translated_blocks += len(chunk.blocks)
+            if on_progress:
+                on_progress(translated_blocks, total_blocks)
     finally:
         translator.close()
