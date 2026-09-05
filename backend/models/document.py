@@ -31,6 +31,13 @@ class Chapter:
     # intermediate representation's contract.
     source_soup: Any | None = None
 
+    # Same rule again: the original archive entry name this chapter's
+    # content came from (e.g. "chap1.xhtml"), needed by a matching
+    # reconstructor to know which entry to replace when rebuilding the
+    # container archive. Not part of the intermediate representation's
+    # contract.
+    source_file_name: str | None = None
+
 
 @dataclass
 class Document:

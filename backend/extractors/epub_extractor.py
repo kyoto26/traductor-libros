@@ -1,11 +1,15 @@
+import posixpath
 import zipfile
 from pathlib import Path
+from xml.etree import ElementTree
 
 from bs4 import BeautifulSoup
 from ebooklib import epub
 
 from extractors.zip_safety import validate_zip_safety
 from models.document import Block, Chapter, Document
+
+_CONTAINER_NS = {"c": "urn:oasis:names:tc:opendocument:xmlns:container"}
 
 _HEADING_TAGS = {"h1", "h2", "h3", "h4", "h5", "h6"}
 
@@ -73,6 +77,24 @@ def _extract_blocks(soup: BeautifulSoup, chapter_id: str) -> list[Block]:
     return blocks
 
 
+def _resolve_opf_dir(zip_file: zipfile.ZipFile) -> str:
+    # item.file_name is relative to the OPF's own location, not to the ZIP
+    # root — real EPUBs commonly nest content under "EPUB/", "OEBPS/", or no
+    # subfolder at all. ebooklib resolves this internally while reading
+    # (EpubReader.opf_dir) but never exposes it on the returned EpubBook, so
+    # it has to be re-derived here the same way ebooklib does: read
+    # META-INF/container.xml, which always points at the real OPF path.
+    container_xml = zip_file.read("META-INF/container.xml")
+    root = ElementTree.fromstring(container_xml)
+    rootfile = root.find(".//c:rootfile", _CONTAINER_NS)
+    if rootfile is None or not rootfile.get("full-path"):
+        raise EpubParsingError(
+            "META-INF/container.xml no tiene un <rootfile full-path=...> válido."
+        )
+
+    return posixpath.dirname(rootfile.get("full-path"))
+
+
 def _is_content_document(item) -> bool:
     # EpubNav is a subclass of EpubHtml (the navigation document is valid,
     # translatable-looking HTML) but it's a table of contents, not book
@@ -81,7 +103,7 @@ def _is_content_document(item) -> bool:
     return isinstance(item, epub.EpubHtml) and not isinstance(item, epub.EpubNav)
 
 
-def _extract_chapters(book: epub.EpubBook) -> list[Chapter]:
+def _extract_chapters(book: epub.EpubBook, opf_dir: str) -> list[Chapter]:
     chapters: list[Chapter] = []
 
     for idref, _linear in book.spine:
@@ -104,7 +126,13 @@ def _extract_chapters(book: epub.EpubBook) -> list[Chapter]:
         title = blocks[0].text if blocks and blocks[0].type == "heading" else None
 
         chapters.append(
-            Chapter(id=chapter_id, title=title, blocks=blocks, source_soup=soup)
+            Chapter(
+                id=chapter_id,
+                title=title,
+                blocks=blocks,
+                source_soup=soup,
+                source_file_name=posixpath.join(opf_dir, item.file_name),
+            )
         )
 
     return chapters
@@ -125,11 +153,12 @@ def extract(file_path: str | Path) -> Document:
     except zipfile.BadZipFile as exc:
         raise EpubParsingError(f"El archivo no es un EPUB/ZIP válido: {exc}") from exc
 
-    zip_file.close()  # only needed for the safety check; ebooklib opens its own
-
     try:
+        with zip_file:  # only needed for the safety check + opf_dir lookup;
+            opf_dir = _resolve_opf_dir(zip_file)  # ebooklib opens its own
+
         book = epub.read_epub(str(file_path))
-        chapters = _extract_chapters(book)
+        chapters = _extract_chapters(book, opf_dir)
     except EpubParsingError:
         raise
     except Exception as exc:
@@ -140,4 +169,10 @@ def extract(file_path: str | Path) -> Document:
         # never leak a raw traceback to the caller.
         raise EpubParsingError(f"No se pudo procesar el EPUB: {exc}") from exc
 
-    return Document(metadata={"formato_original": "epub"}, chapters=chapters)
+    return Document(
+        # source_path lets epub_reconstructor.py copy every unchanged entry
+        # (CSS, fonts, images, OPF, NCX, nav) byte-for-byte from the
+        # original archive instead of regenerating the container.
+        metadata={"formato_original": "epub", "source_path": str(file_path)},
+        chapters=chapters,
+    )
