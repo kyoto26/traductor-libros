@@ -5,7 +5,10 @@ from fastapi.responses import JSONResponse
 from api.routes import router
 from api.security import FileTooLargeError, InvalidFileTypeError
 from extractors.epub_extractor import EpubParsingError
+from extractors.pdf_extractor import PdfParsingError
 from extractors.zip_safety import ZipSafetyError
+from reconstructors.epub_reconstructor import EpubReconstructionError
+from reconstructors.pdf_reconstructor import PdfReconstructionError
 from translator.llm_client import TranslationError
 
 load_dotenv()
@@ -38,6 +41,21 @@ async def epub_parsing_error_handler(request: Request, exc: EpubParsingError):
 
 @app.exception_handler(ZipSafetyError)
 async def zip_safety_error_handler(request: Request, exc: ZipSafetyError):
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
+@app.exception_handler(PdfParsingError)
+async def pdf_parsing_error_handler(request: Request, exc: PdfParsingError):
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
+@app.exception_handler(EpubReconstructionError)
+async def epub_reconstruction_error_handler(request: Request, exc: EpubReconstructionError):
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
+@app.exception_handler(PdfReconstructionError)
+async def pdf_reconstruction_error_handler(request: Request, exc: PdfReconstructionError):
     return JSONResponse(status_code=400, content={"detail": str(exc)})
 
 

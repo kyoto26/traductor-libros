@@ -10,8 +10,10 @@ from api.security import (
     validate_file_type,
 )
 from extractors.epub_extractor import extract as extract_epub
+from extractors.pdf_extractor import extract as extract_pdf
 from extractors.txt_extractor import extract as extract_txt
 from reconstructors.epub_reconstructor import reconstruct as reconstruct_epub
+from reconstructors.pdf_reconstructor import reconstruct as reconstruct_pdf
 from reconstructors.txt_reconstructor import reconstruct as reconstruct_txt
 from translator.glossary import Glossary
 from translator.pipeline import translate_document
@@ -116,5 +118,32 @@ async def translate_epub(request: Request, file: UploadFile = File(...)):
     return Response(
         content=output_bytes,
         media_type="application/epub+zip",
+        headers={"Content-Disposition": f'attachment; filename="{download_name}"'},
+    )
+
+
+@router.post("/translate-pdf")
+async def translate_pdf(request: Request, file: UploadFile = File(...)):
+    with tempfile.TemporaryDirectory(prefix="traductor-docs-") as tmp_dir:
+        tmp_dir_path = Path(tmp_dir)
+        tmp_path = await _receive_upload(request, file, ".pdf", tmp_dir_path)
+
+        document = extract_pdf(tmp_path)
+
+        # Optional for now — no endpoint accepts a user-supplied glossary yet.
+        glossary: Glossary | None = None
+        translate_document(document, glossary=glossary)
+
+        output_path = tmp_dir_path / "translated.pdf"
+        reconstruct_pdf(document, output_path)
+
+        # Same reasoning as /translate-epub: read into memory before the
+        # TemporaryDirectory closes and deletes output_path.
+        output_bytes = output_path.read_bytes()
+
+    download_name = f"translated_{tmp_path.name}"
+    return Response(
+        content=output_bytes,
+        media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{download_name}"'},
     )
