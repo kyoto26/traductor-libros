@@ -15,7 +15,7 @@ Estas tareas quedan documentadas para no perderlas de vista, pero no se implemen
 
 ### Fase 4 (PDF)
 
-- [ ] Confirmar que la extracción con PyMuPDF es puramente de lectura pasiva (solo texto), sin ejecutar JavaScript embebido ni contenido interactivo del PDF.
+- [x] Confirmar que la extracción con PyMuPDF es puramente de lectura pasiva (solo texto), sin ejecutar JavaScript embebido ni contenido interactivo del PDF. Confirmado por código (la API de Python nunca invoca el motor de JS de MuPDF) y empíricamente (un PDF con un `OpenAction` de JavaScript real se abre y extrae sin ejecutar nada) — ver `extractors/pdf_extractor.py`.
 
 ## Deuda técnica pendiente por fase
 
@@ -30,3 +30,7 @@ Estas tareas quedan documentadas para no perderlas de vista, pero no se implemen
 ### Fase 3 (EPUB) — revisar si el límite de tamaño crece
 
 - [ ] **`/translate-epub` carga el EPUB de salida completo en memoria** (`output_path.read_bytes()`) antes de responder, en vez de usar `FileResponse` — necesario porque el archivo vive en un `tempfile.TemporaryDirectory()` que se borra apenas el handler retorna, y `FileResponse` lee del disco *después* de eso. Es razonable mientras el límite de subida sea 50MB, pero si ese límite crece mucho, conviene pasar a `FileResponse` + `BackgroundTask` (la tarea de background borra el `tmp_dir` recién después de que la respuesta terminó de enviarse), para no bufferear archivos grandes enteros en memoria por request.
+
+### Fase 7 (pulido)
+
+- [ ] **Códigos de error HTTP 400 vs 500 sin rigor semántico estricto.** `EpubParsingError`, `PdfParsingError`, `EpubReconstructionError` y `PdfReconstructionError` responden todas con 400, pero no todas son estrictamente "culpa del cliente" — en particular, un fallo en `EpubReconstructionError`/`PdfReconstructionError` ocurre después de que el archivo del cliente ya se extrajo y tradujo con éxito, así que es más un fallo de procesamiento nuestro (más cercano semánticamente a un 500) que un input inválido. Se decidió mantener 400 por consistencia con `EpubParsingError`/`PdfParsingError` en vez de mezclar códigos, pero vale la pena revisar esto con más cuidado en la fase de pulido, en vez de mantenerlo por conveniencia indefinidamente.
