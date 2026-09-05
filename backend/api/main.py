@@ -4,6 +4,8 @@ from fastapi.responses import JSONResponse
 
 from api.routes import router
 from api.security import FileTooLargeError, InvalidFileTypeError
+from extractors.epub_extractor import EpubParsingError
+from extractors.zip_safety import ZipSafetyError
 from translator.llm_client import TranslationError
 
 load_dotenv()
@@ -27,6 +29,16 @@ async def translation_error_handler(request: Request, exc: TranslationError):
     # retries. Revisit this once large documents (EPUB/PDF) make discarding
     # all progress on a late failure too costly.
     return JSONResponse(status_code=502, content={"detail": str(exc)})
+
+
+@app.exception_handler(EpubParsingError)
+async def epub_parsing_error_handler(request: Request, exc: EpubParsingError):
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
+@app.exception_handler(ZipSafetyError)
+async def zip_safety_error_handler(request: Request, exc: ZipSafetyError):
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
 
 
 @app.exception_handler(ValueError)

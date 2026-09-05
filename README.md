@@ -26,3 +26,7 @@ Estas tareas quedan documentadas para no perderlas de vista, pero no se implemen
 ### Fase 5 (persistencia)
 
 - [ ] **`Document` con `source_element`/`source_soup` poblados no es serializable tal cual.** Estos campos (agregados en `models/document.py` para que `epub_extractor.py`/`epub_reconstructor.py` puedan ubicar cada bloque de vuelta en su posición original del HTML) guardan objetos de BeautifulSoup, no datos planos — no se pueden volcar directo a JSON/DB para guardar el progreso de un job y reanudarlo después. Cuando implementemos persistencia de jobs, decidir el enfoque: lo más simple es no persistir el `Document` completo, sino reconstruirlo desde el archivo original (el EPUB en disco) en cada resume, guardando solo el progreso de traducción (qué bloques ya se tradujeron y su `translated_text`) como datos planos aparte.
+
+### Fase 3 (EPUB) — revisar si el límite de tamaño crece
+
+- [ ] **`/translate-epub` carga el EPUB de salida completo en memoria** (`output_path.read_bytes()`) antes de responder, en vez de usar `FileResponse` — necesario porque el archivo vive en un `tempfile.TemporaryDirectory()` que se borra apenas el handler retorna, y `FileResponse` lee del disco *después* de eso. Es razonable mientras el límite de subida sea 50MB, pero si ese límite crece mucho, conviene pasar a `FileResponse` + `BackgroundTask` (la tarea de background borra el `tmp_dir` recién después de que la respuesta terminó de enviarse), para no bufferear archivos grandes enteros en memoria por request.
