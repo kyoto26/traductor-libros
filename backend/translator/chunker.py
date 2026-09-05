@@ -106,7 +106,12 @@ def create_chunks(
     chunks: list[Chunk] = []
 
     for chapter in document.chapters:
-        sorted_blocks = sorted(chapter.blocks, key=lambda b: b.order)
+        # Image blocks (pdf_extractor.py) carry no translatable text — they
+        # never reach a chunk, so they never reach prompt_builder.py or
+        # llm_client.py either. Excluding them here, once, means nothing
+        # downstream in the translation pipeline needs to know they exist.
+        translatable_blocks = [b for b in chapter.blocks if b.type != "image"]
+        sorted_blocks = sorted(translatable_blocks, key=lambda b: b.order)
         chunks.extend(_create_chapter_chunks(sorted_blocks, max_tokens, context_chars))
 
     return chunks

@@ -5,7 +5,7 @@ from typing import Any, Literal, Optional
 @dataclass
 class Block:
     id: str
-    type: Literal["heading", "paragraph", "list_item"]
+    type: Literal["heading", "paragraph", "list_item", "image"]
     text: str
     order: int
     translated_text: Optional[str] = None
@@ -27,6 +27,20 @@ class Block:
     # the original file at all. Not part of the intermediate
     # representation's contract.
     page_number: int | None = None
+
+    # Implementation detail of pdf_extractor.py, only set on type == "image"
+    # blocks: the image's raw bytes in their original encoding, its
+    # extension (e.g. "png", used to pick a filename pdf_reconstructor.py
+    # can reference from HTML), and its original pixel dimensions (a sizing
+    # hint for the reconstructor, not a layout instruction). Same rule as
+    # the other extractor-specific fields above: not part of the
+    # intermediate representation's contract. `text` is empty for image
+    # blocks — chunker.py filters type == "image" out before translation,
+    # so they never reach prompt_builder.py or llm_client.py.
+    image_data: bytes | None = None
+    image_ext: str | None = None
+    image_width: int | None = None
+    image_height: int | None = None
 
 
 @dataclass

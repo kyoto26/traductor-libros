@@ -35,7 +35,13 @@ def _compute_body_size(doc: pymupdf.Document) -> float:
     sizes: Counter[float] = Counter()
 
     for page in doc:
-        for block in page.get_text("dict")["blocks"]:
+        # sort=True: without it, blocks come back in content-stream
+        # insertion order, not reading order (verified empirically — an
+        # image inserted last in the file but positioned mid-page comes
+        # back last regardless of where it visually sits). Font-size
+        # sampling doesn't care about order, but every other pass below
+        # does, so this is applied consistently everywhere blocks are read.
+        for block in page.get_text("dict", sort=True)["blocks"]:
             if block["type"] != 0:  # skip image blocks
                 continue
             for line in block["lines"]:
@@ -78,13 +84,24 @@ def _classify_and_clean(text: str, max_size: float, body_size: float) -> tuple[s
     return "paragraph", text
 
 
-def _extract_page_candidates(
-    page: pymupdf.Page, body_size: float
-) -> list[tuple[str, str]]:
-    candidates: list[tuple[str, str]] = []
+def _extract_page_candidates(page: pymupdf.Page, body_size: float) -> list[dict]:
+    candidates: list[dict] = []
 
-    for block in page.get_text("dict")["blocks"]:
-        if block["type"] != 0:
+    for block in page.get_text("dict", sort=True)["blocks"]:
+        if block["type"] == 1:
+            # The image block already carries the fully-encoded original
+            # bytes (verified identical to a separate doc.extract_image()
+            # call) plus its format and pixel size — no second lookup via
+            # page.get_images()/extract_image() needed.
+            candidates.append(
+                {
+                    "type": "image",
+                    "image_data": block["image"],
+                    "image_ext": block["ext"],
+                    "image_width": block["width"],
+                    "image_height": block["height"],
+                }
+            )
             continue
 
         text, max_size = _block_text_and_max_size(block)
@@ -93,7 +110,7 @@ def _extract_page_candidates(
 
         block_type, clean_text = _classify_and_clean(text, max_size, body_size)
         if clean_text:
-            candidates.append((block_type, clean_text))
+            candidates.append({"type": block_type, "text": clean_text})
 
     return candidates
 
@@ -114,9 +131,13 @@ def _extract_blocks(doc: pymupdf.Document, chapter_id: str) -> list[Block]:
                 Block(
                     id=f"{chapter_id}-b{len(blocks)}",
                     type=pending["type"],
-                    text=pending["text"],
+                    text=pending.get("text", ""),
                     order=len(blocks),
                     page_number=pending["page_number"],
+                    image_data=pending.get("image_data"),
+                    image_ext=pending.get("image_ext"),
+                    image_width=pending.get("image_width"),
+                    image_height=pending.get("image_height"),
                 )
             )
             pending = None
@@ -124,26 +145,29 @@ def _extract_blocks(doc: pymupdf.Document, chapter_id: str) -> list[Block]:
     for page in doc:
         page_number = page.number + 1  # 1-indexed, more natural for users
 
-        for i, (block_type, text) in enumerate(_extract_page_candidates(page, body_size)):
+        for i, candidate in enumerate(_extract_page_candidates(page, body_size)):
             # Only the first candidate of a page can complete a merge with
-            # whatever was left pending from the previous page — a KNOWN
-            # GAP: this only catches a sentence-punctuation cue, so a word
-            # split by a line-wrap hyphen across the page break (e.g.
-            # "exam-" / "ple") is not reassembled into "example"; that
-            # would need distinguishing a hyphenation break from a real
-            # dash, which isn't attempted here.
+            # whatever was left pending from the previous page — and only
+            # when both sides are "paragraph"; an image (or a heading)
+            # ending or starting a page correctly blocks the merge, since
+            # that's a real content boundary, not a forced page break mid-
+            # sentence. KNOWN GAP: this only catches a sentence-punctuation
+            # cue, so a word split by a line-wrap hyphen across the page
+            # break (e.g. "exam-" / "ple") is not reassembled into
+            # "example"; that would need distinguishing a hyphenation break
+            # from a real dash, which isn't attempted here.
             if (
                 i == 0
                 and pending is not None
                 and pending["type"] == "paragraph"
-                and block_type == "paragraph"
+                and candidate["type"] == "paragraph"
                 and not _ends_sentence(pending["text"])
             ):
-                pending["text"] = f"{pending['text']} {text}"
+                pending["text"] = f"{pending['text']} {candidate['text']}"
                 continue
 
             finalize_pending()
-            pending = {"type": block_type, "text": text, "page_number": page_number}
+            pending = {**candidate, "page_number": page_number}
 
     finalize_pending()
     return blocks
