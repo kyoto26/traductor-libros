@@ -11,8 +11,8 @@ _DEFAULT_CLAUDE_MODEL = "claude-haiku-4-5-20251001"
 _CLAUDE_MAX_OUTPUT_TOKENS = 4096
 
 _BASE_SYSTEM_PROMPT = (
-    "Eres un traductor profesional. Traduce el siguiente texto de español a "
-    "inglés. Devuelve ÚNICAMENTE la traducción, sin explicaciones, notas, "
+    "Eres un traductor profesional. Traduce el siguiente texto de inglés a "
+    "español. Devuelve ÚNICAMENTE la traducción, sin explicaciones, notas, "
     "comillas ni ningún texto adicional."
 )
 

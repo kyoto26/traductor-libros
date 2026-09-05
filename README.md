@@ -1,5 +1,9 @@
 # traductor-docs
 
+## Alcance
+
+V1 traduce de inglés a español.
+
 ## Checklist de seguridad pendiente por fase
 
 Estas tareas quedan documentadas para no perderlas de vista, pero no se implementan todavía — se abordan cuando se llegue a la fase correspondiente.

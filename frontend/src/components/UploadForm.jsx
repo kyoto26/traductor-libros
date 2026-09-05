@@ -14,10 +14,10 @@ export default function UploadForm({ onSubmit }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex w-full max-w-md flex-col gap-6">
-      {/* Selector de idioma fijo: el backend hoy solo traduce es->en */}
+      {/* Selector de idioma fijo: el backend hoy solo traduce en->es */}
       <div className="flex items-center justify-between rounded-lg border border-brand-violet/40 bg-brand-violet/10 px-4 py-2 text-sm">
         <span className="text-brand-violet-glow">Idioma</span>
-        <span className="font-medium">Español → Inglés</span>
+        <span className="font-medium">Inglés → Español</span>
       </div>
 
       <label className="flex flex-col gap-2">

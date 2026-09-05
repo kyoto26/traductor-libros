@@ -34,8 +34,8 @@ def _apply_translation(chunk: Chunk, translated_text: str) -> None:
 
     # The model didn't preserve the paragraph count we asked for. Rather
     # than guessing a wrong per-block mapping (or leaving some blocks as
-    # None, which would silently fall back to the original Spanish text and
-    # produce a mixed-language document), the whole translation goes on the
+    # None, which would silently fall back to the original untranslated text
+    # and produce a mixed-language document), the whole translation goes on the
     # first block and the rest are left blank — no content is lost or
     # duplicated, only the fine-grained paragraph split for this chunk.
     logger.warning(
