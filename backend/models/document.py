@@ -19,6 +19,15 @@ class Block:
     # future non-HTML format) leaves it as None.
     source_element: Any | None = None
 
+    # Implementation detail of pdf_extractor.py: the 1-indexed page a block
+    # started on (a block spanning a page break keeps its starting page).
+    # Low-commitment provenance info, NOT tied to any particular
+    # reconstruction strategy — unlike source_element/source_soup above,
+    # this doesn't assume how (or whether) pdf_reconstructor.py will use
+    # the original file at all. Not part of the intermediate
+    # representation's contract.
+    page_number: int | None = None
+
 
 @dataclass
 class Chapter:
