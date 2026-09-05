@@ -18,7 +18,7 @@ _BASE_SYSTEM_PROMPT = (
 
 
 class TranslationError(Exception):
-    """Error de dominio para fallos de traducción, sin importar el proveedor."""
+    """Domain error for translation failures, regardless of the provider."""
 
 
 @dataclass

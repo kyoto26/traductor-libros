@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 _DEFAULT_MAX_TOKENS = 1000
 _DEFAULT_CONTEXT_CHARS = 200
 
-# Sin el tokenizer exacto de cada proveedor (llama3.1 vs. Claude), se usa la
-# heurística estándar de ~4 caracteres por token. Es independiente del modelo
-# pero aproximada: el conteo real puede variar hasta un 20-30% respecto a
-# esta estimación, así que max_tokens debe elegirse con margen.
+# Without each provider's exact tokenizer (llama3.1 vs. Claude), we use the
+# standard heuristic of ~4 characters per token. It's model-agnostic but
+# approximate: the real count can vary by up to 20-30% from this estimate,
+# so max_tokens should be chosen with some margin.
 _CHARS_PER_TOKEN = 4
 
 

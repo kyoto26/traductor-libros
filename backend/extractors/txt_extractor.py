@@ -7,25 +7,26 @@ from models.document import Block, Chapter, Document
 
 _PARAGRAPH_SPLIT_RE = re.compile(r"\n\s*\n")
 
-# Codepages legacy de un solo byte se solapan entre sí (una misma secuencia
-# de bytes puede ser válida en varios), así que sin restringir candidatos
-# charset-normalizer puede elegir uno de Europa del Este/Central para texto
-# que en realidad es Europa Occidental. Se acota a las codificaciones
-# relevantes para los idiomas que esta herramienta traduce (es/en/fr/pt/it/de).
+# Legacy single-byte codepages overlap with each other (the same byte
+# sequence can be valid in more than one), so without restricting the
+# candidates charset-normalizer can pick an Eastern/Central European one
+# for text that is actually Western European. This is narrowed down to
+# the encodings relevant to the languages this tool translates
+# (es/en/fr/pt/it/de).
 #
-# LIMITACIÓN CONOCIDA (verificada empíricamente, no solo teórica): esto NO
-# garantiza rechazar un archivo en una codificación legacy fuera de este
-# conjunto (p. ej. cp1250 real para polaco/checo). Los codecs de un solo byte
-# tienen mapeo total (casi cualquier byte "decodifica" a algo), así que
-# _decode() solo lanza ValueError cuando el score de coherencia de
-# charset-normalizer descarta TODOS los candidatos occidentales — lo cual
-# pasa de forma confiable con texto largo y muy distintivo, pero NO con
-# texto corto o con pocos caracteres especiales: un .txt real en cp1250
-# como "Dziękuję bardzo za pomoc." se decodifica en silencio como cp1252,
-# dando "Dziêkujê bardzo za pomoc." (mojibake, sin ningún error). Si este
-# proyecto necesita soportar idiomas de Europa Central/del Este como origen,
-# hay que ampliar esta lista (o pedir la codificación al usuario en vez de
-# adivinarla).
+# KNOWN LIMITATION (empirically verified, not just theoretical): this does
+# NOT guarantee rejecting a file in a legacy encoding outside this set
+# (e.g. real cp1250 for Polish/Czech). Single-byte codecs have a total
+# mapping (almost any byte "decodes" to something), so _decode() only
+# raises ValueError when charset-normalizer's coherence score rules out
+# ALL Western candidates — which reliably happens with long, highly
+# distinctive text, but NOT with short text or text with few special
+# characters: a real .txt file in cp1250 like "Dziękuję bardzo za pomoc."
+# silently decodes as cp1252, producing "Dziêkujê bardzo za pomoc."
+# (mojibake, with no error at all). If this project ever needs to support
+# Central/Eastern European languages as a source language, this list needs
+# to be extended (or the encoding should be asked from the user instead of
+# guessed).
 _LIKELY_ENCODINGS = ["cp1252", "iso8859_1", "iso8859_15"]
 
 

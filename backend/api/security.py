@@ -15,9 +15,9 @@ _ALLOWED_MIME_TYPES: dict[str, set[str]] = {
 _SAFE_FILENAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
 _MAX_FILENAME_LENGTH = 200
 
-# Los "magic numbers" que identifican el tipo real de archivo están
-# siempre al comienzo; no hace falta (ni conviene) pasarle a libmagic
-# el archivo completo, incluso si el caller ya lo tiene en memoria.
+# The "magic numbers" that identify a file's real type are always at
+# the start; there's no need (and no benefit) to pass libmagic the
+# entire file, even if the caller already holds it in memory.
 _MAGIC_SNIFF_SIZE = 4096
 
 
