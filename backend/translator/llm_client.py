@@ -39,6 +39,13 @@ class TranslatorClient(ABC):
         ...
 
 
+# NOTE: prompt_builder.build_translation_request() can already fold glossary
+# instructions into the `context` string it returns. If a caller passes that
+# already-formatted context here AND also passes `glossary`, the glossary
+# instructions will be duplicated in the final prompt. For now, callers that
+# go through prompt_builder must call translate() with glossary=None — see
+# the README's "Checklist de seguridad pendiente por fase" / Fase 2 note for
+# the plan to remove this implicit rule.
 def _build_system_prompt(context: str | None, glossary: dict | None) -> str:
     parts = [_BASE_SYSTEM_PROMPT]
 
