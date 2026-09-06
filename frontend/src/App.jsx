@@ -10,7 +10,7 @@ export default function App() {
     <div className="flex min-h-screen flex-col items-center justify-center gap-10 px-4 py-16">
       <header className="text-center">
         <h1 className="text-3xl font-bold text-brand-violet-core">Traductor de Documentos</h1>
-        <p className="mt-2 text-brand-violet-glow">Traduce sin sonar traducido, sin cambiar el formato</p>
+        <p className="mt-2 text-brand-violet-glow">Traduce tus libros favoritos, sin perder su esencia</p>
       </header>
 
       {state === "idle" && <UploadForm onSubmit={submit} />}
