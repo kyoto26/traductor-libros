@@ -9,6 +9,10 @@ export default function ProgressView({ state, progress }) {
     <div className="flex w-full max-w-md flex-col items-center gap-4">
       <StatusBadge status={state} />
 
+      {hasTotal && (
+        <span className="text-4xl font-bold text-brand-violet-core">{percent}%</span>
+      )}
+
       <div className="h-3 w-full overflow-hidden rounded-full bg-brand-violet/15">
         <div
           className={`h-full rounded-full bg-brand-violet transition-all duration-500 ${
@@ -20,7 +24,7 @@ export default function ProgressView({ state, progress }) {
 
       <p className="text-sm text-brand-violet-glow">
         {hasTotal
-          ? `${translated} / ${total} bloques traducidos (${percent}%)`
+          ? `${translated} / ${total} bloques traducidos`
           : "Preparando el documento..."}
       </p>
     </div>
