@@ -4,6 +4,27 @@
 
 V1 traduce de inglés a español.
 
+## Cómo correr el proyecto localmente
+
+**Backend:**
+
+```
+cd backend
+source ../venv/bin/activate
+uvicorn api.main:app --reload
+```
+
+Importante: `uvicorn` tiene que correr desde **dentro** de `backend/`, no desde la raíz del proyecto — los imports internos (`from api.routes import ...`, `from extractors.txt_extractor import ...`, etc.) asumen que `backend/` es la raíz del paquete. Correrlo desde la raíz del repo falla con `ModuleNotFoundError`.
+
+**Frontend** (en otra terminal):
+
+```
+cd frontend
+npm run dev
+```
+
+**Además**, Ollama tiene que estar corriendo (`ollama serve`) para que la traducción funcione — es el proveedor por defecto (`TRANSLATOR_PROVIDER=ollama`), y sin él las traducciones fallan con un error de conexión.
+
 ## Checklist de seguridad pendiente por fase
 
 Estas tareas quedan documentadas para no perderlas de vista, pero no se implementan todavía — se abordan cuando se llegue a la fase correspondiente.
