@@ -49,7 +49,7 @@ export default function OpenBook({ view, children }) {
         </div>
         <div className="mt-9 flex items-center gap-2.5 font-display text-base italic text-brand-violet-core/50">
           <span className="h-px w-[22px] bg-brand-violet-glow/60" />
-          Ex libris · Traductor
+          Ex libris Acervo
         </div>
       </section>
 
