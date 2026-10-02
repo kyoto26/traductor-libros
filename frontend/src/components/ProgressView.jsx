@@ -23,7 +23,19 @@ export default function ProgressView({ fileName, pct, stageLabel, progress }) {
       </div>
 
       <div className="relative mt-[22px] h-0.5 bg-brand-violet-core/15">
-        <div className="progress-fill absolute left-0 top-0 h-0.5" style={{ width }} />
+        {/* Before there is a percentage, a fainter glint runs along the empty
+            track so the bar never looks frozen. */}
+        {pct === 0 && (
+          <div className="absolute inset-0 overflow-hidden opacity-50">
+            <span className="progress-glint absolute inset-0 animate-glint" />
+          </div>
+        )}
+        <div
+          className="progress-fill absolute left-0 top-0 h-0.5 animate-glow overflow-hidden"
+          style={{ width }}
+        >
+          <span className="progress-glint absolute inset-0 animate-glint" />
+        </div>
         <div
           className="progress-ribbon absolute -top-1 -ml-1.5 h-[30px] w-3 bg-brand-violet-glow"
           style={{ left: width }}

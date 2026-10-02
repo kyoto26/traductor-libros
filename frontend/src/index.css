@@ -113,22 +113,39 @@ a:hover {
       0 6px 14px rgba(0, 0, 0, 0.5);
   }
 
+  /* Fill and ribbon share duration and easing so they move as one; 1.2s
+     stays under the 2s polling interval. */
   .progress-fill {
     background: linear-gradient(90deg, #9d4edd, #f3e8ff);
     box-shadow: 0 0 12px #c77dff;
-    transition: width 0.3s;
+    transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .progress-ribbon {
     clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
-    transition: left 0.3s;
+    transition: left 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* A narrow highlight on an oversized background; animating
+     background-position sweeps it across whatever width its parent has. */
+  .progress-glint {
+    background: linear-gradient(90deg, transparent 45%, rgba(243, 232, 255, 0.95) 50%, transparent 55%);
+    background-size: 300% 100%;
+    background-position: 100% 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-flicker,
   .animate-stamp,
+  .animate-glint,
+  .animate-glow,
   .library-mote {
     animation: none !important;
+  }
+
+  .progress-fill,
+  .progress-ribbon {
+    transition-duration: 0.1s;
   }
 }
