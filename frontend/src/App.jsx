@@ -1,27 +1,37 @@
+import LibraryBackdrop from "./components/library/LibraryBackdrop";
+import OpenBook from "./components/OpenBook";
 import ProgressView from "./components/ProgressView";
 import ResultView from "./components/ResultView";
 import UploadForm from "./components/UploadForm";
 import { useTranslationJob } from "./hooks/useTranslationJob";
 
 export default function App() {
-  const { state, jobId, progress, error, submit, retry, reset } = useTranslationJob();
+  const { state, view, jobId, progress, pct, stageLabel, fileName, error, submit, retry, reset } =
+    useTranslationJob();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-10 px-4 py-16">
-      <header className="text-center">
-        <h1 className="text-3xl font-bold text-brand-violet-core">Traductor de Documentos</h1>
-        <p className="mt-2 text-brand-violet-glow">Traduce tus libros favoritos, sin perder su esencia</p>
-      </header>
+    <main className="relative box-border flex min-h-screen items-center justify-center overflow-hidden px-5 pb-20 pt-12">
+      <LibraryBackdrop />
 
-      {state === "idle" && <UploadForm onSubmit={submit} />}
+      <OpenBook view={view}>
+        {view === "upload" && <UploadForm onSubmit={submit} />}
 
-      {(state === "uploading" || state === "pending" || state === "processing") && (
-        <ProgressView state={state} progress={progress} />
-      )}
+        {view === "progress" && (
+          <ProgressView fileName={fileName} pct={pct} stageLabel={stageLabel} progress={progress} />
+        )}
 
-      {(state === "completed" || state === "failed") && (
-        <ResultView state={state} jobId={jobId} error={error} onRetry={retry} onReset={reset} />
-      )}
-    </div>
+        {(view === "done" || view === "error") && (
+          <ResultView
+            state={state}
+            jobId={jobId}
+            fileName={fileName}
+            progress={progress}
+            error={error}
+            onRetry={retry}
+            onReset={reset}
+          />
+        )}
+      </OpenBook>
+    </main>
   );
 }

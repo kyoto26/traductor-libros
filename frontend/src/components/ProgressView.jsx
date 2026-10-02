@@ -1,32 +1,43 @@
-import StatusBadge from "./StatusBadge";
+import { PageHeading, WorkTitle } from "./OpenBook";
 
-export default function ProgressView({ state, progress }) {
+export default function ProgressView({ fileName, pct, stageLabel, progress }) {
   const { translated, total } = progress;
-  const hasTotal = typeof total === "number" && total > 0;
-  const percent = hasTotal ? Math.min(100, Math.round((translated / total) * 100)) : 0;
+  const width = `${pct}%`;
 
   return (
-    <div className="flex w-full max-w-md flex-col items-center gap-4">
-      <StatusBadge status={state} />
+    <div className="flex flex-1 flex-col">
+      <PageHeading>En traducción</PageHeading>
+      <WorkTitle>{fileName}</WorkTitle>
+      <div className="mt-1 text-xs text-brand-violet-core/50">Inglés → Español</div>
 
-      {hasTotal && (
-        <span className="text-4xl font-bold text-brand-violet-core">{percent}%</span>
-      )}
+      <div
+        className="mt-auto pt-10 font-display text-[120px] font-medium leading-[.9]"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={pct}
+        aria-valuetext={`${pct}% · ${stageLabel}`}
+      >
+        {pct}
+        <span className="text-[44px] italic text-brand-violet-glow">%</span>
+      </div>
 
-      <div className="h-3 w-full overflow-hidden rounded-full bg-brand-violet/15">
+      <div className="relative mt-[22px] h-0.5 bg-brand-violet-core/15">
+        <div className="progress-fill absolute left-0 top-0 h-0.5" style={{ width }} />
         <div
-          className={`h-full rounded-full bg-brand-violet transition-all duration-500 ${
-            hasTotal ? "" : "w-1/3 animate-pulse"
-          }`}
-          style={hasTotal ? { width: `${percent}%` } : undefined}
+          className="progress-ribbon absolute -top-1 -ml-1.5 h-[30px] w-3 bg-brand-violet-glow"
+          style={{ left: width }}
         />
       </div>
 
-      <p className="text-sm text-brand-violet-glow">
-        {hasTotal
-          ? `${translated} / ${total} bloques traducidos`
-          : "Preparando el documento..."}
-      </p>
+      <div className="mt-[22px] flex items-center justify-between gap-4 text-[13px] text-brand-violet-core/65">
+        <span>{stageLabel}</span>
+        {total > 0 && (
+          <span className="text-brand-violet-core/50">
+            {translated} / {total} bloques
+          </span>
+        )}
+      </div>
     </div>
   );
 }

@@ -3,6 +3,132 @@
 @tailwind utilities;
 
 body {
-  @apply bg-brand-black text-brand-violet-core;
-  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  @apply m-0 bg-brand-black font-sans text-brand-violet-core;
+}
+
+a {
+  color: #c77dff;
+}
+
+a:hover {
+  color: #f3e8ff;
+}
+
+/* Applied inline per mote (each has its own duration/delay), so it is
+   declared here rather than in tailwind.config.js, which only emits
+   keyframes referenced by an animate-* utility. */
+@keyframes dust {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: var(--o); }
+  85% { opacity: var(--o); }
+  100% { transform: translate(var(--dx), -120px); opacity: 0; }
+}
+
+/* Long gradients and shadows from the reference design live here instead of
+   as Tailwind arbitrary values, to keep the JSX readable. */
+@layer components {
+  .library-shelf {
+    background: linear-gradient(180deg, transparent 80%, rgba(0, 0, 0, 0.45));
+    border-bottom: 12px solid #2b1636;
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.7);
+  }
+
+  .library-book {
+    border-radius: 2px 2px 0 0;
+    box-shadow:
+      inset 2px 0 0 rgba(243, 232, 255, 0.14),
+      inset -2px 0 0 rgba(0, 0, 0, 0.4);
+  }
+
+  .library-light {
+    background:
+      radial-gradient(ellipse 55% 75% at 78% 0%, rgba(199, 125, 255, 0.4), rgba(157, 78, 221, 0.12) 48%, transparent 72%),
+      radial-gradient(ellipse 100% 85% at 50% 52%, rgba(5, 5, 5, 0.15) 25%, rgba(5, 5, 5, 0.85) 85%);
+  }
+
+  .library-ray {
+    background: linear-gradient(180deg, rgba(243, 232, 255, 0.12), transparent 75%);
+    transform: rotate(14deg);
+    filter: blur(30px);
+  }
+
+  .library-mote {
+    background: #f3e8ff;
+    box-shadow: 0 0 8px #c77dff;
+    opacity: 0;
+  }
+
+  .open-book {
+    zoom: 0.8;
+    border-radius: 4px 10px 10px 4px;
+    background: linear-gradient(180deg, #1b0f24, #0f0816);
+    border: 1px solid rgba(199, 125, 255, 0.18);
+    box-shadow:
+      0 40px 90px rgba(0, 0, 0, 0.85),
+      0 0 90px rgba(157, 78, 221, 0.2),
+      0 8px 0 -2px #2a1636,
+      0 14px 0 -4px #1a0e22;
+  }
+
+  .open-book-gutter {
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.55) 50%, transparent);
+  }
+
+  .page-left {
+    background: radial-gradient(ellipse at 100% 0%, rgba(199, 125, 255, 0.12), transparent 60%);
+  }
+
+  .page-right {
+    background:
+      repeating-linear-gradient(180deg, transparent 0, transparent 35px, rgba(199, 125, 255, 0.07) 35px, rgba(199, 125, 255, 0.07) 36px),
+      radial-gradient(ellipse at 0% 100%, rgba(0, 0, 0, 0.35), transparent 60%);
+  }
+
+  .book-button {
+    @apply flex cursor-pointer items-center justify-between rounded-sm border-0 px-[22px] py-4 font-display text-2xl font-semibold italic text-brand-black no-underline;
+    background: linear-gradient(180deg, #d9a2ff, #c77dff);
+    box-shadow: 0 0 30px rgba(199, 125, 255, 0.35);
+    transition: box-shadow 0.2s;
+  }
+
+  .book-button:hover {
+    color: #050505;
+    box-shadow: 0 0 48px rgba(199, 125, 255, 0.7);
+  }
+
+  .book-button:disabled {
+    @apply cursor-not-allowed opacity-50;
+    box-shadow: none;
+  }
+
+  .book-link {
+    @apply cursor-pointer border-0 bg-transparent p-0 font-sans text-[13px] font-medium text-brand-violet-glow underline;
+  }
+
+  .book-cover {
+    border-radius: 2px 4px 4px 2px;
+    background: linear-gradient(90deg, #5a2a82, #9d4edd);
+    box-shadow:
+      inset 5px 0 0 rgba(0, 0, 0, 0.3),
+      0 6px 14px rgba(0, 0, 0, 0.5);
+  }
+
+  .progress-fill {
+    background: linear-gradient(90deg, #9d4edd, #f3e8ff);
+    box-shadow: 0 0 12px #c77dff;
+    transition: width 0.3s;
+  }
+
+  .progress-ribbon {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+    transition: left 0.3s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-flicker,
+  .animate-stamp,
+  .library-mote {
+    animation: none !important;
+  }
 }
